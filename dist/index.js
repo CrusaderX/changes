@@ -28980,6 +28980,85 @@ module.exports = { commitDiff }
 
 /***/ }),
 
+/***/ 8934:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const {getInput} = __nccwpck_require__(2875);
+const {context} = __nccwpck_require__(3448);
+
+module.exports = {
+  token: getInput('token', {required: true}),
+  folderInput: getInput('folder', {required: false}),
+  excludeInput: getInput('exclude', {required: false}),
+  context,
+};
+
+/***/ }),
+
+/***/ 3954:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { setFailed, info, setOutput } = __nccwpck_require__(2875);
+const { GitHub } = __nccwpck_require__(3448);
+const { commitDiff } = __nccwpck_require__(4840);
+const { changedServices, getInputList } = __nccwpck_require__(7621);
+
+module.exports = async ({context, token, folderInput, excludeInput}) => {
+    const client = new GitHub(token);
+    const eventName = context.eventName;
+
+    const exclude = getInputList(excludeInput);
+
+    let base, head;
+
+    switch (eventName) {
+      case 'pull_request':
+        base = context.payload.pull_request.base.sha;
+        head = context.payload.pull_request.head.sha;
+        break;
+      case 'push':
+        base = context.payload.before;
+        head = context.payload.after;
+        break;
+      default:
+        setFailed(`Failed to determine event type ${eventName}`);
+    }
+
+    info(`base ${base}, head: ${head}`);
+
+    if (!base || !head) {
+      setFailed(
+        `Couldn't determine base and head commits sha from the payload ${context}`,
+      );
+    }
+
+    const changedFilesInCommit = await commitDiff(client, {
+      repo: {
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+      },
+      base,
+      head,
+    });
+
+    const filterDeterminedFilesChanges = changedServices(changedFilesInCommit, exclude, folderInput);
+
+    if (!filterDeterminedFilesChanges.length) {
+      setFailed(
+        `Couldn't construct correct matrix for services, perhaps, diff contains only files and they are not in ` +
+        `corresponding folder ${folderInput}`,
+      );
+    } else {
+      const matrix = JSON.stringify({'services': filterDeterminedFilesChanges});
+      info(`Generating matrix: ${matrix}`);
+
+      setOutput('matrix', matrix);
+    }
+  };
+
+
+/***/ }),
+
 /***/ 7621:
 /***/ ((module) => {
 
@@ -28999,10 +29078,11 @@ const changedServices = (files, exclude, folder) => {
   const result = isDefaultFolder
     ? files
         .map(file => file.shift())
-        .filter(file => file.startsWith('.'))
+        .filter(file => !file.startsWith('.'))
         .filter(uniq)
     : files
         .filter(file => file.includes(folder))
+        .filter(file => !file.startsWith('.'))
         .map(file => file.at(1))
         .filter(uniq)
     
@@ -29215,66 +29295,13 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const { setFailed, info, getInput, setOutput } = __nccwpck_require__(2875);
-const { context, GitHub } = __nccwpck_require__(3448);
-const { commitDiff } = __nccwpck_require__(4840);
-const { changedServices, getInputList } = __nccwpck_require__(7621);
+const main = __nccwpck_require__(3954);
+const input = __nccwpck_require__(8934);
 
 (async () => {
-  const client = new GitHub(getInput('token', { required: true }));
-  const folderInput = getInput('folder', { required: false });
-  const excludeInput = getInput('exclude', { required: false });
-  const eventName = context.eventName;
-
-  const exclude = getInputList(excludeInput);
-
-  let base, head;
-
-  switch (eventName) {
-    case 'pull_request':
-      base = context.payload.pull_request.base.sha;
-      head = context.payload.pull_request.head.sha;
-      break;
-    case 'push':
-      base = context.payload.before;
-      head = context.payload.after;
-      break;
-    default:
-      setFailed(`Failed to determine event type ${eventName}`);
-  };
-
-  info(`base ${base}, head: ${head}`);
-
-  if (!base || !head) {
-    setFailed(
-      `Couldn't determine base and head commits sha from the payload ${context}`
-    );
-  };
-
-  const changedFilesInCommit = await commitDiff(client, {
-    repo: {
-      owner: context.repo.owner,
-      repo: context.repo.repo
-    },
-    base,
-    head,
-  });
-
-  const filterDeterminedFilesChanges = changedServices(changedFilesInCommit, exclude, folderInput);
-
-  if (!filterDeterminedFilesChanges.length) {
-    setFailed(
-      `Couldn't construct correct matrix for services, perhaps, diff contains only files and they are not in ` +
-      `corresponding folder ${folderInput}`
-    )
-  } else {
-
-    const matrix = JSON.stringify({"services": filterDeterminedFilesChanges});  
-    info(`Generating matrix: ${matrix}`);
-
-    setOutput('matrix', matrix);
-  }
-})()
+  await main(input);
+  process.exit(0);
+})();
 })();
 
 module.exports = __webpack_exports__;
