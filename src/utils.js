@@ -13,14 +13,15 @@ const changedServices = (files, exclude, folder) => {
 
   const result = isDefaultFolder
     ? files
-        .map(file => file.shift())
-        .filter(file => !file.startsWith('.'))
-        .filter(uniq)
+      .map(file => file.split('/').at(0))
+      .filter(file => !file.startsWith('.'))
+      .filter(uniq)
     : files
-        .filter(file => file.includes(folder))
-        .filter(file => !file.startsWith('.'))
-        .map(file => file.at(1))
-        .filter(uniq)
+      .filter(file => file.startsWith(folder))
+      .map(file => file.substring(folder.length + 1))
+      .map(file => file.split('/').at(0))
+      .filter(file => !file.startsWith('.'))
+      .filter(uniq)
     
   return isExclude
     ? result.filter(file => !exclude.includes(file))
