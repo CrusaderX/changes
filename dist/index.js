@@ -28973,6 +28973,7 @@ const commitDiff = async (client, payload) => {
 
   return files
     .filter(file => statuses.includes(file.status))
+    .map(file => file.filename);
 }
 
 module.exports = { commitDiff }
@@ -29085,7 +29086,7 @@ const changedServices = (files, exclude, folder) => {
       .map(file => file.split('/').at(0))
       .filter(file => !file.startsWith('.'))
       .filter(uniq)
-    
+
   return isExclude
     ? result.filter(file => !exclude.includes(file))
     : result

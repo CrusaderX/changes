@@ -17,6 +17,7 @@ const commitDiff = async (client, payload) => {
 
   return files
     .filter(file => statuses.includes(file.status))
+    .map(file => file.filename);
 }
 
 module.exports = { commitDiff }
