@@ -44,10 +44,11 @@ module.exports = async ({context, token, folderInput, excludeInput}) => {
     const filterDeterminedFilesChanges = changedServices(changedFilesInCommit, exclude, folderInput);
 
     if (!filterDeterminedFilesChanges.length) {
-      setFailed(
+      info(
         `Couldn't construct correct matrix for services, perhaps, diff contains only files and they are not in ` +
-        `corresponding folder ${folderInput}`,
+        `corresponding folder ${folderInput} or there are no any changes at all. Will return empty matrix`,
       );
+      setOutput('matrix', JSON.stringify({'services': []}));
     } else {
       const matrix = JSON.stringify({'services': filterDeterminedFilesChanges});
       info(`Generating matrix: ${matrix}`);
