@@ -12,9 +12,29 @@ Trying to find changed folders in push or pull request event. We filter files wi
 
 Where do we have to search changes
 
+Default: .
+
+Example: 
+```yaml
+folder: 'service'
+```
+
 ### `exclude`
 
 Which file names should we exclude from payload
+
+Default: ''
+
+Example: 
+```yaml
+exclude: service1,service2
+```
+```yaml
+exclude: |
+  service1
+  service2
+  ...
+```
 
 ## Outputs
 
@@ -26,7 +46,7 @@ Which file names should we exclude from payload
 
 ## Example usage with monorepo
 
-If you have monorepository with services in root - omit folder name or set it to '.'
+If you have monorepository with services in root - omit folder name, default is current directory - .
 
 Repository folder structure in example action:
 
@@ -36,10 +56,10 @@ Repository folder structure in example action:
 │   │   ├── index.js
 │   │   └── blog/
 │   │       ├── index.html
-|   |           ... // changes were made
+|   |           ... // changes were made here
 │   └── pizza/
 │       └── index.js
-|           ... // changes were made
+|           ... // changes were made here
 ├── tests/
 │   ├── unittests
 ├── venv/
@@ -66,7 +86,7 @@ jobs:
           fetch-depth: 0
       - name: find changed services
         id: changes
-        uses: CrusaderX/changes@v1.0.4
+        uses: CrusaderX/changes@v1
         with:
           folder: 'services'
           token: ${{ secrets.GITHUB_TOKEN }}
