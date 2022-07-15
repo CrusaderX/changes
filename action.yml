@@ -1,4 +1,4 @@
-name: 'changes'
+name: 'PRs changes with matrix as output'
 description: 'Find changes between branches in pull request'
 inputs:
   token:
