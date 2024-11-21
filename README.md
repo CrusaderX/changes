@@ -1,6 +1,6 @@
 # Javascript action: get matrix from changed files
 
-Trying to find changed folders in push or pull request event. We filter files wich start with dot.
+Find changes in changed directories based on input and construct a matrix with changed. For instance, if you have monorepository, that would be helpful to run some actions on a specific set of changed services in parallel (matrix) way.
 
 ## Inputs
 

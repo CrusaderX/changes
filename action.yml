@@ -1,11 +1,11 @@
-name: 'PRs changes with matrix as output'
-description: 'Find changes between branches in pull request'
+name: 'Changes with matrix as output in specific folder'
+description: 'Construct dynamic matrix of changed services based on previous commit'
 inputs:
   token:
     description: 'Github token'
     reqired: true
   folder:
-    description: 'Which folder to search'
+    description: 'Where services are located'
     required: false
     default: '.'
   exclude:
@@ -16,5 +16,5 @@ outputs:
   martrix:
     description: 'Output matrix for changed directories'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
