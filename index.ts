@@ -1,7 +1,7 @@
 import { getInput, getMultilineInput, setFailed } from '@actions/core';
 import { context, getOctokit } from '@actions/github';
 
-import { IGithubInput, IParserOutput } from './src/types';
+import { IGithubInput } from './src/types';
 import { ParserService } from './src/parser.service';
 import { FilterService } from './src/filter.service';
 
@@ -19,19 +19,18 @@ const input: IGithubInput = {
 
   parser.parse();
 
-  const diff: IParserOutput = await parser.diff({ client: github });
+  const parsed = await parser.diff({ client: github });
 
-  if (!diff.completed) {
-    setFailed(`Failed to get git diff with error ${diff.error}`);
-    return;
+  if (!parsed.completed) {
+    return setFailed(parsed.error);
   }
 
   const filter = new FilterService({
-    files: diff.files,
     root: input.folder,
     include: input.include,
     exclude: input.exclude,
   });
-  const matrix = filter.filter();
+
+  const matrix = filter.filter(parsed.files);
   console.log(matrix);
 })();

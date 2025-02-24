@@ -2,10 +2,10 @@
   "name": "changes",
   "version": "1.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "node_modules/.bin/jest .",
-    "build": "ncc build index.js"
+    "build": "ncc build index.ts"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,6 @@
     "@types/jest": "^29.5.14",
     "@types/micromatch": "^4.0.9",
     "jest": "^28.1.1",
-    "prettier": "^3.5.2",
     "typescript": "^5.7.3"
   }
 }

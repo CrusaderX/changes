@@ -109,12 +109,11 @@ describe('FilterService', () => {
     },
   ])('$name', ({ folder, include, exclude, expected }) => {
     const filter = new FilterService({
-      files: changedFiles,
       root: folder,
       include,
       exclude,
     });
-    const output = filter.filter();
+    const output = filter.filter(changedFiles);
     expect(output).toEqual(expected);
   });
 });

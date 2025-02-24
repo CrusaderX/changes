@@ -1,60 +1,48 @@
-import micromatch from 'micromatch';
 import { dirname, sep } from 'path';
+import { FilterConfig, FilterPredicateCreator } from './filter.types';
+import {
+  filterByExclude,
+  filterByHidden,
+  filterByInclude,
+  filterByRoot,
+} from './filter.predicates';
 
 export class FilterService {
+  private root?: string;
   private include?: string[];
   private exclude?: string[];
-  private root?: string;
-  private files: string[];
+  private filterPredicateCreators: FilterPredicateCreator[];
 
   constructor({
-    files,
     include,
     exclude,
     root,
-  }: {
-    files: string[];
-    include?: string[];
-    exclude?: string[];
-    root?: string;
-  }) {
+    filterPredicateCreators = [
+      filterByHidden,
+      filterByRoot,
+      filterByInclude,
+      filterByExclude,
+    ],
+  }: FilterConfig) {
     this.root = root?.replace(/\/+$/, '');
     this.include = include;
     this.exclude = exclude;
-    this.files = files;
+    this.filterPredicateCreators = filterPredicateCreators;
   }
 
-  public filter(): string[] {
-    const filtered = this.files
-      .filter(this.filterByRoot)
-      .filter(this.filterByHidden)
-      .filter(this.filterByInclude)
-      .filter(this.filterByExclude);
+  public filter(files: string[]): string[] {
+    const config = {
+      root: this.root,
+      include: this.include,
+      exclude: this.exclude,
+    };
+    const filtered = this.filterPredicateCreators.reduce(
+      (currentFiles, creator) => currentFiles.filter(creator(config)),
+      files,
+    );
 
     return this.constructMatrix(filtered);
   }
-
-  private filterByHidden = (entry: string): boolean => {
-    return dirname(entry)
-      .split(sep)
-      .every(i => !i.startsWith('.'));
-  };
-
-  private filterByRoot = (entry: string): boolean => {
-    const { root } = this;
-    if (!root) return true;
-    return entry.startsWith(root);
-  };
-
-  private filterByInclude = (entry: string): boolean => {
-    if (!this.include?.length) return true;
-    return micromatch.isMatch(entry, this.include);
-  };
-
-  private filterByExclude = (entry: string): boolean => {
-    if (!this.exclude?.length) return true;
-    return !micromatch.isMatch(entry, this.exclude);
-  };
 
   private constructMatrix(files: string[]): string[] {
     const entries = files

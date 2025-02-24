@@ -1,7 +1,8 @@
 import { Context } from '@actions/github/lib/context';
 import { setFailed } from '@actions/core';
 
-import { IParserOutput, GitHub } from './types';
+import { IParserOutput } from './parser.types';
+import { GitHub } from './types';
 
 export class ParserService {
   private readonly diffStatuses = new Set([
@@ -58,14 +59,14 @@ export class ParserService {
       };
     }
 
-    // TODO: handle pagination
+    // TODO: pagination?
+    //   url: "GET /repos/{owner}/{repo}/compare/{basehead}",
     const response = await client.rest.repos.compareCommits({
       base: this.base,
       head: this.head,
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
-      page: 1,
-      per_page: 100,
+      per_page: 300,
     });
 
     if (response.status !== 200) {
