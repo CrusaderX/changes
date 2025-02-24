@@ -14,7 +14,8 @@ Where do we have to search changes
 
 Default: .
 
-Example: 
+Example:
+
 ```yaml
 folder: 'service'
 ```
@@ -25,10 +26,12 @@ Which file names should we exclude from payload
 
 Default: ''
 
-Example: 
+Example:
+
 ```yaml
 exclude: service1,service2
 ```
+
 ```yaml
 exclude: |
   service1
