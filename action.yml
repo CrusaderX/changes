@@ -5,11 +5,15 @@ inputs:
     description: 'Github token'
     reqired: true
   folder:
-    description: 'Where services are located'
+    description: 'Where services are located (root folder of all services inside your monorepo)'
     required: false
     default: '.'
+  include:
+    description: 'Which folder to include, multiline input'
+    required: false
+    default: ''
   exclude:
-    description: 'Which folder to exclude. Could be a comma-separated list or multiline'
+    description: 'Which folder to exclude, multiline input'
     required: false
     default: ''
 outputs:

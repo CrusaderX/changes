@@ -2,10 +2,10 @@
   "name": "changes",
   "version": "1.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "test:cov": "export GITHUB_TOKEN=token_here && jest --runInBand --coverage",
-    "build": "ncc build index.js"
+    "test": "node_modules/.bin/jest .",
+    "build": "ncc build index.ts"
   },
   "repository": {
     "type": "git",
@@ -19,10 +19,16 @@
   },
   "homepage": "https://github.com/CrusaderX/changes#readme",
   "dependencies": {
-    "@actions/core": "^1.9.0",
-    "@actions/github": "^2.1.0"
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
+    "micromatch": "^4.0.8"
   },
   "devDependencies": {
-    "jest": "^28.1.1"
+    "@babel/preset-env": "^7.26.9",
+    "@babel/preset-typescript": "^7.26.0",
+    "@types/jest": "^29.5.14",
+    "@types/micromatch": "^4.0.9",
+    "jest": "^28.1.1",
+    "typescript": "^5.7.3"
   }
 }
