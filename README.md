@@ -1,30 +1,47 @@
-# Javascript action: get matrix from changed files
+[![Tests](https://github.com/CrusaderX/changes/workflows/tests/badge.svg)](https://github.com/CrusaderX/changes/actions)
 
-Find changes in changed directories based on input and construct a matrix with changed. For instance, if you have monorepository, that would be helpful to run some actions on a specific set of changed services in parallel (matrix) way.
+
+# Typescript action: get matrix from changed files
+
+This action analyzes the changes in your repository to determine which directories (or services) have been modified. It is particularly useful for monorepos, where you may want to run specific workflows (e.g. tests or builds) only on the services that have been updated.
+
 
 ## Inputs
 
 ### `token`
 
-**Required** github token, default GITHUB_TOKEN will be enough
+**Required** GitHub token. The default `GITHUB_TOKEN` is sufficient.
 
 ### `folder`
 
-Where do we have to search changes
+Specifies the root folder to search for changes, default is current directory
 
-Default: .
+Default: '' (no filter)
 
 Example:
 
 ```yaml
 folder: 'service'
 ```
+### `include`
+
+A regular expression to filter and include specific folders from the payload.
+
+Default: '' (no filter)
+
+Example:
+
+
+```yaml
+include: '**/api/**'
+```
+
 
 ### `exclude`
 
-Which file names should we exclude from payload
+A regular expression or a comma-separated list to exclude certain file names or directories from the payload.
 
-Default: ''
+Default: '' (no filter)
 
 Example:
 
@@ -36,6 +53,7 @@ exclude: service1,service2
 exclude: |
   service1
   service2
+  **/apps/**
   ...
 ```
 
@@ -43,15 +61,18 @@ exclude: |
 
 ### `matrix`
 
+The action outputs a JSON object representing the matrix of changed services.
+
 ```json
 { "services": [] }
 ```
 
-## Example usage with monorepo
+## Example Usage with a Monorepo
 
-If you have monorepository with services in root - omit folder name, default is current directory - .
+If you have a monorepository where services are located in the root (or under a specific folder), simply omit or adjust the folder input accordingly (default is current directory .).
 
-Repository folder structure in example action:
+Repository structure example:
+
 
 ```shell
 ├── services/
@@ -84,12 +105,12 @@ jobs:
     outputs:
       matrix: ${{ steps.changes.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: find changed services
         id: changes
-        uses: CrusaderX/changes@v1
+        uses: CrusaderX/changes@v2
         with:
           folder: 'services'
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -103,5 +124,8 @@ jobs:
       fail-fast: false
     steps:
       - run: |
-          echo ${{ matrix.services }} was changed! # will output auth and pizza becase changes were made there
+          echo ${{ matrix.services }} was changed!
 ```
+
+More examples of how to use and configure the action (including tests for various use cases) can be found in the tests folder of the repository.
+
