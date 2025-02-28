@@ -1,4 +1,4 @@
-![tests](https://github.com/CrusaderX/changes/actions/workflows/ci.yml/badge.svg?event=push)
+![tests](https://github.com/CrusaderX/changes/actions/workflows/ci.yaml/badge.svg?event=push)
 
 # Typescript action: get matrix from changed files
 
