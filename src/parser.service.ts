@@ -22,7 +22,6 @@ export class ParserService {
 
   public parse() {
     this.parseSHA();
-    this.validateSHA();
   }
 
   private parseSHA(): void {
@@ -42,14 +41,6 @@ export class ParserService {
     }
   }
 
-  private validateSHA(): void {
-    if (!this.base || !this.head) {
-      setFailed(
-        "Couldn't determine base and head commits sha from the payload",
-      );
-    }
-  }
-
   public async diff({ client }: { client: GitHub }): Promise<IParserOutput> {
     if (this.base === '0000000000000000000000000000000000000000') {
       // TODO: return all files?
@@ -60,7 +51,6 @@ export class ParserService {
     }
 
     // TODO: pagination?
-    //   url: "GET /repos/{owner}/{repo}/compare/{basehead}",
     const response = await client.rest.repos.compareCommits({
       base: this.base,
       head: this.head,

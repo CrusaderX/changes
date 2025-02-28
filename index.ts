@@ -1,4 +1,10 @@
-import { getInput, getMultilineInput, setFailed } from '@actions/core';
+import {
+  getInput,
+  getMultilineInput,
+  setFailed,
+  info,
+  setOutput,
+} from '@actions/core';
 import { context, getOctokit } from '@actions/github';
 
 import { IGithubInput } from './src/types';
@@ -21,7 +27,7 @@ const input: IGithubInput = {
 
   const parsed = await parser.diff({ client: github });
 
-  if (!parsed.completed) {
+  if (parsed.completed === false) {
     return setFailed(parsed.error);
   }
 
@@ -32,5 +38,12 @@ const input: IGithubInput = {
   });
 
   const matrix = filter.filter(parsed.files);
-  console.log(matrix);
+
+  if (!matrix) {
+    info(
+      `Unable to construct a valid services matrix. The diff may only include files outside the expected folder (${input.folder}), or there might be no changes at all. Returning an empty matrix.`,
+    );
+  }
+
+  setOutput('matrix', JSON.stringify({ services: matrix }));
 })();
