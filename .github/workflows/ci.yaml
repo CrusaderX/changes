@@ -15,4 +15,4 @@ jobs:
         with:
           node-version: 23
       - run: npm install --no-audit --no-fund --prefer-offline --no-progress
-      - run: npm run tests
+      - run: npm run test
