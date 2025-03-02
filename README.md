@@ -109,7 +109,7 @@ jobs:
           fetch-depth: 0
       - name: find changed services
         id: changes
-        uses: CrusaderX/changes@v2
+        uses: CrusaderX/changes@v3
         with:
           folder: 'services'
           token: ${{ secrets.GITHUB_TOKEN }}
