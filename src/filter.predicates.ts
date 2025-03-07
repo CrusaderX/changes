@@ -29,5 +29,5 @@ export const filterByExclude =
   (config: BaseFilterConfig) =>
     (entry: string): boolean => {
       if (!config.exclude?.length) return true;
-      return !micromatch.isMatch(entry, config.exclude);
+      return !micromatch.isMatch(entry, config.exclude, { dot: true });
     };
