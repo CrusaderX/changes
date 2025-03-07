@@ -34048,7 +34048,7 @@ const path_1 = __nccwpck_require__(6928);
 const filterRootFiles = (config) => (entry) => {
     return (0, path_1.dirname)(entry)
         .split(path_1.sep)
-        .every(i => !i.startsWith('.'));
+        .every(i => i != '.');
 };
 exports.filterRootFiles = filterRootFiles;
 const filterByRoot = (config) => (entry) => {
@@ -36151,6 +36151,7 @@ const input = {
         exclude: input.exclude,
     });
     const matrix = filter.filter(parsed.files);
+    console.log('Will set output matrix:', JSON.stringify({ services: matrix }));
     if (!matrix) {
         (0, core_1.info)(`Unable to construct a valid services matrix. The diff may only include files outside the expected folder (${input.folder}), or there might be no changes at all. Returning an empty matrix.`);
     }
