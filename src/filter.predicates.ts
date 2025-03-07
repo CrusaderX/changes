@@ -4,30 +4,30 @@ import { BaseFilterConfig } from './filter.types';
 
 export const filterRootFiles =
   (config: BaseFilterConfig) =>
-    (entry: string): boolean => {
-      return dirname(entry)
-        .split(sep)
-        .every(i => i != '.');
-    };
+  (entry: string): boolean => {
+    return dirname(entry)
+      .split(sep)
+      .every(i => i != '.');
+  };
 
 export const filterByRoot =
   (config: BaseFilterConfig) =>
-    (entry: string): boolean => {
-      const { root } = config;
-      if (!root) return true;
-      return entry.startsWith(root);
-    };
+  (entry: string): boolean => {
+    const { root } = config;
+    if (!root) return true;
+    return entry.startsWith(root);
+  };
 
 export const filterByInclude =
   (config: BaseFilterConfig) =>
-    (entry: string): boolean => {
-      if (!config.include?.length) return true;
-      return micromatch.isMatch(entry, config.include);
-    };
+  (entry: string): boolean => {
+    if (!config.include?.length) return true;
+    return micromatch.isMatch(entry, config.include);
+  };
 
 export const filterByExclude =
   (config: BaseFilterConfig) =>
-    (entry: string): boolean => {
-      if (!config.exclude?.length) return true;
-      return !micromatch.isMatch(entry, config.exclude, { dot: true });
-    };
+  (entry: string): boolean => {
+    if (!config.exclude?.length) return true;
+    return !micromatch.isMatch(entry, config.exclude, { dot: true });
+  };
