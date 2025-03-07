@@ -37,6 +37,8 @@ const input: IGithubInput = {
 
   const matrix = filter.filter(parsed.files);
 
+  console.log('Will set output matrix:', JSON.stringify({ services: matrix }));
+
   if (!matrix) {
     info(
       `Unable to construct a valid services matrix. The diff may only include files outside the expected folder (${input.folder}), or there might be no changes at all. Returning an empty matrix.`,
