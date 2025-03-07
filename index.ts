@@ -20,6 +20,7 @@ const input: IGithubInput = {
 };
 
 (async () => {
+  console.log(context);
   const parser = new ParserService(input.context);
   const github = getOctokit(input.token);
 

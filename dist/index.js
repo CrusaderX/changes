@@ -36130,6 +36130,7 @@ const input = {
     context: github_1.context,
 };
 (async () => {
+    console.log(github_1.context);
     const parser = new parser_service_1.ParserService(input.context);
     const github = (0, github_1.getOctokit)(input.token);
     parser.parse();
