@@ -108,6 +108,13 @@ describe('FilterService', () => {
       exclude: ['*'],
       expected: ['services/user-service'],
     },
+    {
+      name: 'Scenario 11: No root, no includes, exclude = [".github/*"]  => returns everything except .github',
+      folder: '',
+      include: [],
+      exclude: ['.github/**'],
+      expected: ['services', 'packages', 'tools', 'apps'],
+    },
   ])('$name', ({ folder, include, exclude, expected }) => {
     const filter = new FilterService({
       root: folder,
