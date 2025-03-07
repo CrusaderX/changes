@@ -5,6 +5,7 @@ import { IParserOutput } from './parser.types';
 import { GitHub } from './types';
 
 export class ParserService {
+  private readonly initialBase = '0000000000000000000000000000000000000000';
   private readonly diffStatuses = new Set([
     'added',
     'renamed',
@@ -14,14 +15,20 @@ export class ParserService {
 
   private base: string;
   private head: string;
+  private client: GitHub;
   private context: Context;
 
-  constructor(context: Context) {
+  constructor(context: Context, client: GitHub) {
     this.context = context;
+    this.client = client;
   }
 
-  public parse() {
+  public diff(): Promise<IParserOutput> {
     this.parseSHA();
+
+    return this.base === this.initialBase
+      ? this.initialCommitDiff()
+      : this.defaultCommitDiff();
   }
 
   private parseSHA(): void {
@@ -41,30 +48,38 @@ export class ParserService {
     }
   }
 
-  public async diff({ client }: { client: GitHub }): Promise<IParserOutput> {
-    if (this.base === '0000000000000000000000000000000000000000') {
-      // TODO: return all files?
+  private async initialCommitDiff(): Promise<IParserOutput> {
+    const response = await this.client.rest.repos.getCommit({
+      owner: this.context.repo.owner,
+      repo: this.context.repo.repo,
+      ref: this.head,
+    });
+
+    const { data } = response;
+    const { files } = data;
+
+    if (!files) {
       return {
         completed: false,
-        error: 'Base is 0000000000000000000000000000000000000000',
+        error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
       };
     }
 
-    // TODO: pagination?
-    const response = await client.rest.repos.compareCommits({
+    const filenames = files
+      .filter(file => this.diffStatuses.has(file.status))
+      .map(file => file.filename);
+
+    return { completed: true, files: filenames };
+  }
+
+  private async defaultCommitDiff(): Promise<IParserOutput> {
+    const response = await this.client.rest.repos.compareCommits({
       base: this.base,
       head: this.head,
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
       per_page: 300,
     });
-
-    if (response.status !== 200) {
-      return {
-        completed: false,
-        error: `Couldn't get response from github, data: ${response.data} and status code: ${response.status}`,
-      };
-    }
 
     const { data } = response;
     const { files } = data;

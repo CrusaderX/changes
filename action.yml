@@ -7,7 +7,7 @@ inputs:
   folder:
     description: 'Where services are located (root folder of all services inside your monorepo)'
     required: false
-    default: '.'
+    default: ''
   include:
     description: 'Which folder to include, multiline input'
     required: false

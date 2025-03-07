@@ -34042,15 +34042,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.filterByExclude = exports.filterByInclude = exports.filterByRoot = exports.filterByHidden = void 0;
+exports.filterByExclude = exports.filterByInclude = exports.filterByRoot = exports.filterRootFiles = void 0;
 const micromatch_1 = __importDefault(__nccwpck_require__(7205));
 const path_1 = __nccwpck_require__(6928);
-const filterByHidden = (config) => (entry) => {
+const filterRootFiles = (config) => (entry) => {
     return (0, path_1.dirname)(entry)
         .split(path_1.sep)
-        .every(i => !i.startsWith('.'));
+        .every(i => i != '.');
 };
-exports.filterByHidden = filterByHidden;
+exports.filterRootFiles = filterRootFiles;
 const filterByRoot = (config) => (entry) => {
     const { root } = config;
     if (!root)
@@ -34067,7 +34067,7 @@ exports.filterByInclude = filterByInclude;
 const filterByExclude = (config) => (entry) => {
     if (!config.exclude?.length)
         return true;
-    return !micromatch_1.default.isMatch(entry, config.exclude);
+    return !micromatch_1.default.isMatch(entry, config.exclude, { dot: true });
 };
 exports.filterByExclude = filterByExclude;
 
@@ -34085,7 +34085,7 @@ const path_1 = __nccwpck_require__(6928);
 const filter_predicates_1 = __nccwpck_require__(245);
 class FilterService {
     constructor({ include, exclude, root, filterPredicateCreators = [
-        filter_predicates_1.filterByHidden,
+        filter_predicates_1.filterRootFiles,
         filter_predicates_1.filterByRoot,
         filter_predicates_1.filterByInclude,
         filter_predicates_1.filterByExclude,
@@ -34133,7 +34133,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ParserService = void 0;
 const core_1 = __nccwpck_require__(8984);
 class ParserService {
-    constructor(context) {
+    constructor(context, client) {
+        this.initialBase = '0000000000000000000000000000000000000000';
         this.diffStatuses = new Set([
             'added',
             'renamed',
@@ -34141,9 +34142,13 @@ class ParserService {
             'modified',
         ]);
         this.context = context;
+        this.client = client;
     }
-    parse() {
+    diff() {
         this.parseSHA();
+        return this.base === this.initialBase
+            ? this.initialCommitDiff()
+            : this.defaultCommitDiff();
     }
     parseSHA() {
         switch (this.context.eventName) {
@@ -34159,28 +34164,33 @@ class ParserService {
                 (0, core_1.setFailed)('Failed to determine event type, only push and pull_request events are supported');
         }
     }
-    async diff({ client }) {
-        if (this.base === '0000000000000000000000000000000000000000') {
-            // TODO: return all files?
+    async initialCommitDiff() {
+        const response = await this.client.rest.repos.getCommit({
+            owner: this.context.repo.owner,
+            repo: this.context.repo.repo,
+            ref: this.head,
+        });
+        const { data } = response;
+        const { files } = data;
+        if (!files) {
             return {
                 completed: false,
-                error: 'Base is 0000000000000000000000000000000000000000',
+                error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
             };
         }
-        // TODO: pagination?
-        const response = await client.rest.repos.compareCommits({
+        const filenames = files
+            .filter(file => this.diffStatuses.has(file.status))
+            .map(file => file.filename);
+        return { completed: true, files: filenames };
+    }
+    async defaultCommitDiff() {
+        const response = await this.client.rest.repos.compareCommits({
             base: this.base,
             head: this.head,
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             per_page: 300,
         });
-        if (response.status !== 200) {
-            return {
-                completed: false,
-                error: `Couldn't get response from github, data: ${response.data} and status code: ${response.status}`,
-            };
-        }
         const { data } = response;
         const { files } = data;
         if (!files) {
@@ -36130,10 +36140,9 @@ const input = {
     context: github_1.context,
 };
 (async () => {
-    const parser = new parser_service_1.ParserService(input.context);
     const github = (0, github_1.getOctokit)(input.token);
-    parser.parse();
-    const parsed = await parser.diff({ client: github });
+    const parser = new parser_service_1.ParserService(input.context, github);
+    const parsed = await parser.diff();
     if (parsed.completed === false) {
         return (0, core_1.setFailed)(parsed.error);
     }
@@ -36143,6 +36152,7 @@ const input = {
         exclude: input.exclude,
     });
     const matrix = filter.filter(parsed.files);
+    console.log('Will set output matrix:', JSON.stringify({ services: matrix }));
     if (!matrix) {
         (0, core_1.info)(`Unable to construct a valid services matrix. The diff may only include files outside the expected folder (${input.folder}), or there might be no changes at all. Returning an empty matrix.`);
     }

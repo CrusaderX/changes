@@ -24,12 +24,12 @@ Please refer to the [release page](https://github.com/CrusaderX/changes/releases
     #
     # [Learn more about creating and using encrypted secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets)
     #
-    # Default: ${{ github.token }}
+    # Default: ${{ github.token }}, see examples section.
     token: ''
 
     # Specifies the root folder to search for changes or where you applicastion are
     # located. When we parse the commit diff we will filter diff that starts with that
-    # folder.
+    # folder. By default, folder is current directory.
     folder: ''
 
     # A regular expression to filter and include specific folders from the payload.

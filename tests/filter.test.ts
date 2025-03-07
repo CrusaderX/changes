@@ -19,6 +19,7 @@ describe('FilterService', () => {
     '.github/workflows/ci.yml',
     'services/test-service/test/app.test.ts',
     'services/test-service/src/app.ts',
+    'apps/.gitkeep',
   ];
 
   it.each([
@@ -27,7 +28,7 @@ describe('FilterService', () => {
       folder: '',
       include: [],
       exclude: [],
-      expected: ['services', 'packages', 'tools'],
+      expected: ['services', 'packages', 'tools', '.github', 'apps'],
     },
     {
       name: 'Scenario 2: Root is "services", no includes, no excludes => only service-related files',
@@ -106,6 +107,13 @@ describe('FilterService', () => {
       include: ['services/user-service/*'],
       exclude: ['*'],
       expected: ['services/user-service'],
+    },
+    {
+      name: 'Scenario 11: No root, no includes, exclude = [".github/*"]  => returns everything except .github',
+      folder: '',
+      include: [],
+      exclude: ['.github/**'],
+      expected: ['services', 'packages', 'tools', 'apps'],
     },
   ])('$name', ({ folder, include, exclude, expected }) => {
     const filter = new FilterService({

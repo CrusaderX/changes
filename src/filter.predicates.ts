@@ -2,12 +2,12 @@ import micromatch from 'micromatch';
 import { dirname, sep } from 'path';
 import { BaseFilterConfig } from './filter.types';
 
-export const filterByHidden =
+export const filterRootFiles =
   (config: BaseFilterConfig) =>
   (entry: string): boolean => {
     return dirname(entry)
       .split(sep)
-      .every(i => !i.startsWith('.'));
+      .every(i => i != '.');
   };
 
 export const filterByRoot =
@@ -29,5 +29,5 @@ export const filterByExclude =
   (config: BaseFilterConfig) =>
   (entry: string): boolean => {
     if (!config.exclude?.length) return true;
-    return !micromatch.isMatch(entry, config.exclude);
+    return !micromatch.isMatch(entry, config.exclude, { dot: true });
   };

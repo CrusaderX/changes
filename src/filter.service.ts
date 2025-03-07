@@ -1,8 +1,8 @@
 import { dirname, sep } from 'path';
 import { FilterConfig, FilterPredicateCreator } from './filter.types';
 import {
+  filterRootFiles,
   filterByExclude,
-  filterByHidden,
   filterByInclude,
   filterByRoot,
 } from './filter.predicates';
@@ -18,7 +18,7 @@ export class FilterService {
     exclude,
     root,
     filterPredicateCreators = [
-      filterByHidden,
+      filterRootFiles,
       filterByRoot,
       filterByInclude,
       filterByExclude,
