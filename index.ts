@@ -20,13 +20,10 @@ const input: IGithubInput = {
 };
 
 (async () => {
-  console.log(context);
-  const parser = new ParserService(input.context);
   const github = getOctokit(input.token);
+  const parser = new ParserService(input.context, github);
 
-  parser.parse();
-
-  const parsed = await parser.diff({ client: github });
+  const parsed = await parser.diff();
 
   if (parsed.completed === false) {
     return setFailed(parsed.error);
