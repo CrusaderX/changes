@@ -4,7 +4,7 @@ import { IParserOutput } from './parser.types';
 import { GitHub } from './types';
 
 export class ParserService {
-  private readonly initialBase = '0000000000000000000000000000000000000000'
+  private readonly initialBase = '0000000000000000000000000000000000000000';
   private readonly diffStatuses = new Set([
     'added',
     'renamed',

@@ -34042,15 +34042,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.filterByExclude = exports.filterByInclude = exports.filterByRoot = exports.filterByHidden = void 0;
+exports.filterByExclude = exports.filterByInclude = exports.filterByRoot = exports.filterRootFiles = void 0;
 const micromatch_1 = __importDefault(__nccwpck_require__(7205));
 const path_1 = __nccwpck_require__(6928);
-const filterByHidden = (config) => (entry) => {
+const filterRootFiles = (config) => (entry) => {
     return (0, path_1.dirname)(entry)
         .split(path_1.sep)
         .every(i => !i.startsWith('.'));
 };
-exports.filterByHidden = filterByHidden;
+exports.filterRootFiles = filterRootFiles;
 const filterByRoot = (config) => (entry) => {
     const { root } = config;
     if (!root)
@@ -34085,7 +34085,7 @@ const path_1 = __nccwpck_require__(6928);
 const filter_predicates_1 = __nccwpck_require__(245);
 class FilterService {
     constructor({ include, exclude, root, filterPredicateCreators = [
-        filter_predicates_1.filterByHidden,
+        filter_predicates_1.filterRootFiles,
         filter_predicates_1.filterByRoot,
         filter_predicates_1.filterByInclude,
         filter_predicates_1.filterByExclude,

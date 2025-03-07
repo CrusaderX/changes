@@ -39,7 +39,7 @@ const input: IGithubInput = {
 
   if (!matrix) {
     info(
-      `Unable to construct a valid services matrix. The diff may only include files outside the expected folder (${input.folder}), or there might be no changes at all. Returning an empty matrix.`
+      `Unable to construct a valid services matrix. The diff may only include files outside the expected folder (${input.folder}), or there might be no changes at all. Returning an empty matrix.`,
     );
   }
 

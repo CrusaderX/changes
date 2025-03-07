@@ -2,7 +2,7 @@ import micromatch from 'micromatch';
 import { dirname, sep } from 'path';
 import { BaseFilterConfig } from './filter.types';
 
-export const filterByHidden =
+export const filterRootFiles =
   (config: BaseFilterConfig) =>
   (entry: string): boolean => {
     return dirname(entry)
