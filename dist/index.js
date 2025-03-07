@@ -34125,12 +34125,13 @@ exports.FilterService = FilterService;
 /***/ }),
 
 /***/ 149:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ParserService = void 0;
+const core_1 = __nccwpck_require__(8984);
 class ParserService {
     constructor(context, client) {
         this.initialBase = '0000000000000000000000000000000000000000';
@@ -34160,7 +34161,7 @@ class ParserService {
                 this.head = this.context.payload.after;
                 break;
             default:
-                throw new Error('Unsupported event type');
+                (0, core_1.setFailed)('Failed to determine event type, only push and pull_request events are supported');
         }
     }
     async initialCommitDiff() {

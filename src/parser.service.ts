@@ -1,4 +1,5 @@
 import { Context } from '@actions/github/lib/context';
+import { setFailed } from '@actions/core';
 
 import { IParserOutput } from './parser.types';
 import { GitHub } from './types';
@@ -30,7 +31,7 @@ export class ParserService {
       : this.defaultCommitDiff();
   }
 
-  public parseSHA(): void {
+  private parseSHA(): void {
     switch (this.context.eventName) {
       case 'pull_request':
         this.base = this.context.payload?.pull_request?.base.sha;
@@ -41,7 +42,9 @@ export class ParserService {
         this.head = this.context.payload.after;
         break;
       default:
-        throw new Error('Unsupported event type');
+        setFailed(
+          'Failed to determine event type, only push and pull_request events are supported',
+        );
     }
   }
 
