@@ -34067,7 +34067,7 @@ exports.filterByInclude = filterByInclude;
 const filterByExclude = (config) => (entry) => {
     if (!config.exclude?.length)
         return true;
-    return !micromatch_1.default.isMatch(entry, config.exclude);
+    return !micromatch_1.default.isMatch(entry, config.exclude, { dot: true });
 };
 exports.filterByExclude = filterByExclude;
 
