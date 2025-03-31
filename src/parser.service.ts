@@ -1,7 +1,7 @@
 import { Context } from '@actions/github/lib/context';
-import { setFailed } from '@actions/core';
 
-import { IParserOutput } from './parser.types';
+import { IParserOutput, IFile } from './parser.types';
+import { paginateGitHub } from './parser.helper';
 import { GitHub } from './types';
 
 export class ParserService {
@@ -23,78 +23,63 @@ export class ParserService {
     this.client = client;
   }
 
-  public diff(): Promise<IParserOutput> {
-    this.parseSHA();
+  public async diff(): Promise<IParserOutput> {
+    if (!this.parseSHA()) {
+      return {
+        completed: false,
+        error: 'Could not parse SHA',
+      };
+    }
 
-    return this.base === this.initialBase
-      ? this.initialCommitDiff()
-      : this.defaultCommitDiff();
+    const files =
+      this.base === this.initialBase
+        ? await this.initialCommitDiff()
+        : await this.defaultCommitDiff();
+
+    if (!files) {
+      return {
+        completed: false,
+        error:
+          "Couldn't get response from github or files have not been changed",
+      };
+    }
+
+    const filenames = files
+      .filter((file: IFile) => this.diffStatuses.has(file.status)) // TODO: validate that we need to filter out by status
+      .map((file: IFile) => file.filename);
+
+    return { completed: true, files: filenames };
   }
 
-  private parseSHA(): void {
+  private parseSHA(): boolean {
     switch (this.context.eventName) {
       case 'pull_request':
-        this.base = this.context.payload?.pull_request?.base.sha;
-        this.head = this.context.payload?.pull_request?.head.sha;
-        break;
+        this.base = this.context.payload.pull_request.base.sha;
+        this.head = this.context.payload.pull_request.head.sha;
+        return true;
       case 'push':
         this.base = this.context.payload.before;
         this.head = this.context.payload.after;
-        break;
+        return true;
       default:
-        setFailed(
-          'Failed to determine event type, only push and pull_request events are supported',
-        );
+        return;
     }
   }
 
-  private async initialCommitDiff(): Promise<IParserOutput> {
-    const response = await this.client.rest.repos.getCommit({
+  private async initialCommitDiff(): Promise<any> {
+    return await paginateGitHub(this.client.rest.repos.getCommit, {
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
       ref: this.head,
     });
-
-    const { data } = response;
-    const { files } = data;
-
-    if (!files) {
-      return {
-        completed: false,
-        error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
-      };
-    }
-
-    const filenames = files
-      .filter(file => this.diffStatuses.has(file.status))
-      .map(file => file.filename);
-
-    return { completed: true, files: filenames };
   }
 
-  private async defaultCommitDiff(): Promise<IParserOutput> {
-    const response = await this.client.rest.repos.compareCommits({
+  private async defaultCommitDiff(): Promise<any> {
+    return await paginateGitHub(this.client.rest.repos.compareCommits, {
       base: this.base,
       head: this.head,
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
-      per_page: 300,
     });
-
-    const { data } = response;
-    const { files } = data;
-
-    if (!files) {
-      return {
-        completed: false,
-        error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
-      };
-    }
-
-    const filenames = files
-      .filter(file => this.diffStatuses.has(file.status))
-      .map(file => file.filename);
-
-    return { completed: true, files: filenames };
   }
 }
