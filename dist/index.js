@@ -34124,6 +34124,44 @@ exports.FilterService = FilterService;
 
 /***/ }),
 
+/***/ 3860:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.paginateGitHub = paginateGitHub;
+/**
+ * A generic helper to paginate through GitHub API responses.
+ *
+ * @param apiMethod - The GitHub API method that returns a paginated response.
+ * @param params - The parameters to pass to the API method.
+ * @param perPage - The number of items per page (default is 100).
+ * @returns An array of all items from all pages.
+ */
+async function paginateGitHub(fn, params, perPage = 3) {
+    const files = [];
+    let page = 1;
+    while (true) {
+        const response = await fn({ ...params, per_page: perPage, page });
+        const linkHeader = response.headers.link;
+        console.log('linkHeader', linkHeader);
+        files.push(...response.data?.files);
+        console.log('files', files);
+        if (linkHeader && linkHeader.includes('rel=\"next\"')) {
+            console.log('if statement', linkHeader);
+            page++;
+            console.log('page', page);
+            continue;
+        }
+        break;
+    }
+    return files;
+}
+
+
+/***/ }),
+
 /***/ 149:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -34131,7 +34169,7 @@ exports.FilterService = FilterService;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ParserService = void 0;
-const core_1 = __nccwpck_require__(8984);
+const parser_helper_1 = __nccwpck_require__(3860);
 class ParserService {
     constructor(context, client) {
         this.initialBase = '0000000000000000000000000000000000000000';
@@ -34144,65 +34182,55 @@ class ParserService {
         this.context = context;
         this.client = client;
     }
-    diff() {
-        this.parseSHA();
-        return this.base === this.initialBase
-            ? this.initialCommitDiff()
-            : this.defaultCommitDiff();
+    async diff() {
+        if (!this.parseSHA()) {
+            return {
+                completed: false,
+                error: 'Could not parse SHA',
+            };
+        }
+        const files = this.base === this.initialBase
+            ? await this.initialCommitDiff()
+            : await this.defaultCommitDiff();
+        if (!files) {
+            return {
+                completed: false,
+                error: "Couldn't get response from github or files have not been changed",
+            };
+        }
+        const filenames = files
+            .filter((file) => this.diffStatuses.has(file.status)) // TODO: validate that we need to filter out by status
+            .map((file) => file.filename);
+        return { completed: true, files: filenames };
     }
     parseSHA() {
         switch (this.context.eventName) {
             case 'pull_request':
-                this.base = this.context.payload?.pull_request?.base.sha;
-                this.head = this.context.payload?.pull_request?.head.sha;
-                break;
+                this.base = this.context.payload.pull_request.base.sha;
+                this.head = this.context.payload.pull_request.head.sha;
+                return true;
             case 'push':
                 this.base = this.context.payload.before;
                 this.head = this.context.payload.after;
-                break;
+                return true;
             default:
-                (0, core_1.setFailed)('Failed to determine event type, only push and pull_request events are supported');
+                return;
         }
     }
     async initialCommitDiff() {
-        const response = await this.client.rest.repos.getCommit({
+        return await (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.getCommit, {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: this.head,
         });
-        const { data } = response;
-        const { files } = data;
-        if (!files) {
-            return {
-                completed: false,
-                error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
-            };
-        }
-        const filenames = files
-            .filter(file => this.diffStatuses.has(file.status))
-            .map(file => file.filename);
-        return { completed: true, files: filenames };
     }
     async defaultCommitDiff() {
-        const response = await this.client.rest.repos.compareCommits({
+        return await (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.compareCommits, {
             base: this.base,
             head: this.head,
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
-            per_page: 300,
         });
-        const { data } = response;
-        const { files } = data;
-        if (!files) {
-            return {
-                completed: false,
-                error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
-            };
-        }
-        const filenames = files
-            .filter(file => this.diffStatuses.has(file.status))
-            .map(file => file.filename);
-        return { completed: true, files: filenames };
     }
 }
 exports.ParserService = ParserService;
