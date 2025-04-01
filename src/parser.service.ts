@@ -72,7 +72,7 @@ export class ParserService {
       ref: this.head,
     });
 
-    return page.flatMap((page: any) => page.data.files || []);
+    return page.flatMap((page: any) => page.files || []);
   }
 
   private async defaultCommitDiff(): Promise<IFile[]> {
@@ -97,8 +97,7 @@ export class ParserService {
             ref: sha,
           }
         );
-        console.log(page);
-        return page.flatMap((page: any) => page.data.files || []);
+        return page.flatMap((page: any) => page.files || []);
       })
     );
 
