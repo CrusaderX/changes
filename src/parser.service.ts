@@ -1,11 +1,9 @@
 import { Context } from '@actions/github/lib/context';
 
 import { IParserOutput, IFile } from './parser.types';
-import { paginate } from './parser.helper';
 import { GitHub } from './types';
 
 export class ParserService {
-  private readonly chunkSize = 10;
   private readonly initialBase = '0000000000000000000000000000000000000000';
   private readonly diffStatuses = new Set([
     'added',
@@ -68,19 +66,13 @@ export class ParserService {
   }
 
   private async initialCommitDiff(): Promise<IFile[]> {
-    return await paginate(this.client.rest.repos.getCommit, {
+    const page = await this.client.paginate(this.client.rest.repos.getCommit, {
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
       ref: this.head,
     });
-  }
 
-  private chunkArray<T>(arr: T[], chunkSize: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < arr.length; i += chunkSize) {
-      chunks.push(arr.slice(i, i + chunkSize));
-    }
-    return chunks;
+    return page.flatMap((page: any) => page.data.files || []);
   }
 
   private async defaultCommitDiff(): Promise<IFile[]> {
@@ -95,23 +87,20 @@ export class ParserService {
 
     if (!shas.length) return [];
 
-    const chunks = this.chunkArray(shas, this.chunkSize);
-
-    let files: IFile[] = [];
-
-    for (const chunk of chunks) {
-      const fileDiffsPerChunk = await Promise.all(
-        chunk.map(sha =>
-          paginate(this.client.rest.repos.getCommit, {
+    const files = await Promise.all(
+      shas.map(async (sha) => {
+        const page = await this.client.paginate(
+          this.client.rest.repos.getCommit,
+          {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: sha,
-          })
-        )
-      );
-      files = files.concat(fileDiffsPerChunk.flat());
-    }
+          }
+        );
+        return page.flatMap((page: any) => page.data.files || []);
+      })
+    );
 
-    return files;
+    return files.flat();
   }
 }

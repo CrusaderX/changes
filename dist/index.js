@@ -34124,50 +34124,15 @@ exports.FilterService = FilterService;
 
 /***/ }),
 
-/***/ 3860:
+/***/ 149:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.paginate = paginate;
-/**
- * A generic helper to paginate through GitHub API responses.
- *
- * @param fn - The GitHub API method that returns a paginated response.
- * @param params - The parameters to pass to the API method.
- * @returns An array of all items from all pages.
- */
-async function paginate(fn, params) {
-    const files = [];
-    let page = 1;
-    while (true) {
-        const response = await fn({ ...params, page });
-        const linkHeader = response.headers.link;
-        files.push(...response.data.files);
-        if (linkHeader && linkHeader.includes('rel=\"next\"')) {
-            page++;
-            continue;
-        }
-        break;
-    }
-    return files;
-}
-
-
-/***/ }),
-
-/***/ 149:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ParserService = void 0;
-const parser_helper_1 = __nccwpck_require__(3860);
 class ParserService {
     constructor(context, client) {
-        this.chunkSize = 10;
         this.initialBase = '0000000000000000000000000000000000000000';
         this.diffStatuses = new Set([
             'added',
@@ -34214,18 +34179,12 @@ class ParserService {
         }
     }
     async initialCommitDiff() {
-        return await (0, parser_helper_1.paginate)(this.client.rest.repos.getCommit, {
+        const page = await this.client.paginate(this.client.rest.repos.getCommit, {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: this.head,
         });
-    }
-    chunkArray(arr, chunkSize) {
-        const chunks = [];
-        for (let i = 0; i < arr.length; i += chunkSize) {
-            chunks.push(arr.slice(i, i + chunkSize));
-        }
-        return chunks;
+        return page.flatMap((page) => page.data.files || []);
     }
     async defaultCommitDiff() {
         const response = await this.client.rest.repos.compareCommits({
@@ -34237,17 +34196,15 @@ class ParserService {
         const shas = response.data.commits.map(commit => commit.sha);
         if (!shas.length)
             return [];
-        const chunks = this.chunkArray(shas, this.chunkSize);
-        let files = [];
-        for (const chunk of chunks) {
-            const fileDiffsPerChunk = await Promise.all(chunk.map(sha => (0, parser_helper_1.paginate)(this.client.rest.repos.getCommit, {
+        const files = await Promise.all(shas.map(async (sha) => {
+            const page = await this.client.paginate(this.client.rest.repos.getCommit, {
                 owner: this.context.repo.owner,
                 repo: this.context.repo.repo,
                 ref: sha,
-            })));
-            files = files.concat(fileDiffsPerChunk.flat());
-        }
-        return files;
+            });
+            return page.flatMap((page) => page.data.files || []);
+        }));
+        return files.flat();
     }
 }
 exports.ParserService = ParserService;
