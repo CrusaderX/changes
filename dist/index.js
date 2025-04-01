@@ -34227,7 +34227,9 @@ class ParserService {
             base: this.base,
             head: this.head,
         });
+        console.log('base', this.base, 'head', this.head);
         const shas = response.data.commits.map(commit => commit.sha);
+        console.log(shas);
         const fileDiffsPerCommit = await Promise.all(shas.map(sha => (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.getCommit, {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
