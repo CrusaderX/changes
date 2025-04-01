@@ -67,7 +67,7 @@ export class ParserService {
     }
   }
 
-  private async initialCommitDiff(): Promise<any> {
+  private async initialCommitDiff(): Promise<IFile[]> {
     return await paginateGitHub(this.client.rest.repos.getCommit, {
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
@@ -83,7 +83,7 @@ export class ParserService {
     return chunks;
   }
 
-  private async defaultCommitDiff(): Promise<any> {
+  private async defaultCommitDiff(): Promise<IFile[]> {
     const response = await this.client.rest.repos.compareCommits({
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
