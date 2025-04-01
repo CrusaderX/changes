@@ -34130,7 +34130,7 @@ exports.FilterService = FilterService;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.paginateGitHub = paginateGitHub;
+exports.paginate = paginate;
 /**
  * A generic helper to paginate through GitHub API responses.
  *
@@ -34138,11 +34138,11 @@ exports.paginateGitHub = paginateGitHub;
  * @param params - The parameters to pass to the API method.
  * @returns An array of all items from all pages.
  */
-async function paginateGitHub(fn, params) {
+async function paginate(fn, params) {
     const files = [];
     let page = 1;
     while (true) {
-        const response = await fn({ ...params, per_page: 1, page });
+        const response = await fn({ ...params, page });
         const linkHeader = response.headers.link;
         files.push(...response.data.files);
         if (linkHeader && linkHeader.includes('rel=\"next\"')) {
@@ -34214,7 +34214,7 @@ class ParserService {
         }
     }
     async initialCommitDiff() {
-        return await (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.getCommit, {
+        return await (0, parser_helper_1.paginate)(this.client.rest.repos.getCommit, {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: this.head,
@@ -34235,10 +34235,12 @@ class ParserService {
             head: this.head,
         });
         const shas = response.data.commits.map(commit => commit.sha);
+        if (!shas.length)
+            return [];
         const chunks = this.chunkArray(shas, this.chunkSize);
         let files = [];
         for (const chunk of chunks) {
-            const fileDiffsPerChunk = await Promise.all(chunk.map(sha => (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.getCommit, {
+            const fileDiffsPerChunk = await Promise.all(chunk.map(sha => (0, parser_helper_1.paginate)(this.client.rest.repos.getCommit, {
                 owner: this.context.repo.owner,
                 repo: this.context.repo.repo,
                 ref: sha,

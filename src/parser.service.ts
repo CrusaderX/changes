@@ -1,7 +1,7 @@
 import { Context } from '@actions/github/lib/context';
 
 import { IParserOutput, IFile } from './parser.types';
-import { paginateGitHub } from './parser.helper';
+import { paginate } from './parser.helper';
 import { GitHub } from './types';
 
 export class ParserService {
@@ -68,7 +68,7 @@ export class ParserService {
   }
 
   private async initialCommitDiff(): Promise<IFile[]> {
-    return await paginateGitHub(this.client.rest.repos.getCommit, {
+    return await paginate(this.client.rest.repos.getCommit, {
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
       ref: this.head,
@@ -92,6 +92,9 @@ export class ParserService {
     });
 
     const shas = response.data.commits.map(commit => commit.sha);
+
+    if (!shas.length) return [];
+
     const chunks = this.chunkArray(shas, this.chunkSize);
 
     let files: IFile[] = [];
@@ -99,7 +102,7 @@ export class ParserService {
     for (const chunk of chunks) {
       const fileDiffsPerChunk = await Promise.all(
         chunk.map(sha =>
-          paginateGitHub(this.client.rest.repos.getCommit, {
+          paginate(this.client.rest.repos.getCommit, {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: sha,

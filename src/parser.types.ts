@@ -10,6 +10,12 @@ interface IParserErrorOutput {
 
 export type IParserOutput = IParserSuccessOutput | IParserErrorOutput;
 
+export interface IGetCommit {
+  owner: string;
+  repo: string;
+  ref: string;
+}
+
 export interface IFile {
   additions: number;
   blob_url: string;
