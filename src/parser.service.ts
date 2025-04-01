@@ -97,6 +97,7 @@ export class ParserService {
             ref: sha,
           }
         );
+        console.log(page);
         return page.flatMap((page: any) => page.data.files || []);
       })
     );

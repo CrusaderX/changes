@@ -34202,6 +34202,7 @@ class ParserService {
                 repo: this.context.repo.repo,
                 ref: sha,
             });
+            console.log(page);
             return page.flatMap((page) => page.data.files || []);
         }));
         return files.flat();
