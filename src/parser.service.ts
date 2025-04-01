@@ -75,11 +75,25 @@ export class ParserService {
   }
 
   private async defaultCommitDiff(): Promise<any> {
-    return await paginateGitHub(this.client.rest.repos.compareCommits, {
-      base: this.base,
-      head: this.head,
+    const response = await this.client.rest.repos.compareCommits({
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
+      base: this.base,
+      head: this.head,
     });
+
+    const shas = response.data.commits.map(commit => commit.sha);
+
+    const fileDiffsPerCommit = await Promise.all(
+      shas.map(sha =>
+        paginateGitHub(this.client.rest.repos.getCommit, {
+          owner: this.context.repo.owner,
+          repo: this.context.repo.repo,
+          ref: sha,
+        })
+      )
+    );
+
+    return fileDiffsPerCommit.flat();
   }
 }

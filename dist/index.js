@@ -34134,24 +34134,20 @@ exports.paginateGitHub = paginateGitHub;
 /**
  * A generic helper to paginate through GitHub API responses.
  *
- * @param apiMethod - The GitHub API method that returns a paginated response.
+ * @param fn - The GitHub API method that returns a paginated response.
  * @param params - The parameters to pass to the API method.
- * @param perPage - The number of items per page (default is 100).
  * @returns An array of all items from all pages.
  */
-async function paginateGitHub(fn, params, perPage = 3) {
+async function paginateGitHub(fn, params) {
     const files = [];
     let page = 1;
     while (true) {
-        const response = await fn({ ...params, per_page: perPage, page });
+        const response = await fn({ ...params, page });
         const linkHeader = response.headers.link;
-        console.log('linkHeader', linkHeader);
-        files.push(...response.data?.files);
-        console.log('files', files);
+        console.log('linkHeader', linkHeader); // debug
+        files.push(...response.data.files);
         if (linkHeader && linkHeader.includes('rel=\"next\"')) {
-            console.log('if statement', linkHeader);
             page++;
-            console.log('page', page);
             continue;
         }
         break;
@@ -34225,12 +34221,19 @@ class ParserService {
         });
     }
     async defaultCommitDiff() {
-        return await (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.compareCommits, {
-            base: this.base,
-            head: this.head,
+        const response = await this.client.rest.repos.compareCommits({
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
+            base: this.base,
+            head: this.head,
         });
+        const shas = response.data.commits.map(commit => commit.sha);
+        const fileDiffsPerCommit = await Promise.all(shas.map(sha => (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.getCommit, {
+            owner: this.context.repo.owner,
+            repo: this.context.repo.repo,
+            ref: sha,
+        })));
+        return fileDiffsPerCommit.flat();
     }
 }
 exports.ParserService = ParserService;

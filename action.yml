@@ -3,7 +3,8 @@ description: 'Construct dynamic matrix of changed services based on previous com
 inputs:
   token:
     description: 'Github token'
-    reqired: true
+    reqired: false
+    default: ${{ github.token }}
   folder:
     description: 'Where services are located (root folder of all services inside your monorepo)'
     required: false
