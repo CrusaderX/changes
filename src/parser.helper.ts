@@ -16,10 +16,8 @@ export async function paginateGitHub(
 
   while (true) {
     const response = await fn({ ...params, per_page: 1, page });
-    console.log(response);
     const linkHeader = response.headers.link;
 
-    console.log('linkHeader', linkHeader); // debug
     files.push(...response.data.files);
 
     if (linkHeader && linkHeader.includes('rel=\"next\"')) {
