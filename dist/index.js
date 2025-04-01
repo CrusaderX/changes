@@ -34142,7 +34142,8 @@ async function paginateGitHub(fn, params) {
     const files = [];
     let page = 1;
     while (true) {
-        const response = await fn({ ...params, page });
+        const response = await fn({ ...params, per_page: 1, page });
+        console.log(response);
         const linkHeader = response.headers.link;
         console.log('linkHeader', linkHeader); // debug
         files.push(...response.data.files);
