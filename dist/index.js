@@ -34143,9 +34143,7 @@ async function paginateGitHub(fn, params) {
     let page = 1;
     while (true) {
         const response = await fn({ ...params, per_page: 1, page });
-        console.log(response);
         const linkHeader = response.headers.link;
-        console.log('linkHeader', linkHeader); // debug
         files.push(...response.data.files);
         if (linkHeader && linkHeader.includes('rel=\"next\"')) {
             page++;
@@ -34169,6 +34167,7 @@ exports.ParserService = void 0;
 const parser_helper_1 = __nccwpck_require__(3860);
 class ParserService {
     constructor(context, client) {
+        this.chunkSize = 10;
         this.initialBase = '0000000000000000000000000000000000000000';
         this.diffStatuses = new Set([
             'added',
@@ -34221,6 +34220,13 @@ class ParserService {
             ref: this.head,
         });
     }
+    chunkArray(arr, chunkSize) {
+        const chunks = [];
+        for (let i = 0; i < arr.length; i += chunkSize) {
+            chunks.push(arr.slice(i, i + chunkSize));
+        }
+        return chunks;
+    }
     async defaultCommitDiff() {
         const response = await this.client.rest.repos.compareCommits({
             owner: this.context.repo.owner,
@@ -34228,15 +34234,18 @@ class ParserService {
             base: this.base,
             head: this.head,
         });
-        console.log('base', this.base, 'head', this.head);
         const shas = response.data.commits.map(commit => commit.sha);
-        console.log(shas);
-        const fileDiffsPerCommit = await Promise.all(shas.map(sha => (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.getCommit, {
-            owner: this.context.repo.owner,
-            repo: this.context.repo.repo,
-            ref: sha,
-        })));
-        return fileDiffsPerCommit.flat();
+        const chunks = this.chunkArray(shas, this.chunkSize);
+        let files = [];
+        for (const chunk of chunks) {
+            const fileDiffsPerChunk = await Promise.all(chunk.map(sha => (0, parser_helper_1.paginateGitHub)(this.client.rest.repos.getCommit, {
+                owner: this.context.repo.owner,
+                repo: this.context.repo.repo,
+                ref: sha,
+            })));
+            files = files.concat(fileDiffsPerChunk.flat());
+        }
+        return files;
     }
 }
 exports.ParserService = ParserService;
