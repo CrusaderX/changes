@@ -34179,14 +34179,40 @@ class ParserService {
         }
     }
     async initialCommitDiff() {
-        const page = await this.client.paginate(this.client.rest.repos.getCommit, {
+        /**
+         * Retrieves the file diff for a single commit (initial commit).
+         *
+         * This function uses Octokit's built-in pagination to fetch all pages of file changes
+         * for the commit referenced by `this.head`. It calls the GitHub API endpoint for a commit,
+         * automatically aggregating the files array from each page. This is particularly useful
+         * when a commit has more than 300 file changes (up to a limit of 3000 files).
+         *
+         * @returns A promise that resolves to an array of CommitFile objects representing all file changes.
+         */
+        const files = await this.client.paginate(this.client.rest.repos.getCommit, {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: this.head,
-        });
-        return page.flatMap(commit => commit.data?.files || []);
+        }, 
+        // Mapping callback: for each paginated response (commit), return its 'files' array.
+        commit => commit.data?.files);
+        return files;
     }
     async defaultCommitDiff() {
+        /**
+         * Retrieves the combined file diff for a range of commits.
+         *
+         * This function first uses the `compareCommits` endpoint to get a list of commits between
+         * the base and head references. It extracts the commit SHAs from the comparison result, and
+         * for each commit, it uses Octokit's pagination to fetch all pages of file changes by calling
+         * the `getCommit` endpoint. The results from all commits are aggregated into a single flattened
+         * array of CommitFile objects.
+         *
+         * If no commits are found in the comparison, an empty array is returned.
+         *
+         * @returns A promise that resolves to an array of CommitFile objects representing the file changes
+         * across the commit range.
+         */
         const response = await this.client.rest.repos.compareCommits({
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
@@ -34201,7 +34227,6 @@ class ParserService {
             repo: this.context.repo.repo,
             ref: sha,
         }, commit => commit.data?.files)));
-        console.log('files', files.flat());
         return files.flat();
     }
 }
