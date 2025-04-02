@@ -102,14 +102,16 @@ export class ParserService {
             ref: sha,
           },
         );
+        console.log('page', page.files);
         return page.files;
       }),
     );
 
     const files: CommitFile[] = paginateCommitFiles.reduce(
-      (accumulator, currentArray) => accumulator.concat(currentArray),
+      (accumulator, arr) => accumulator.concat(arr),
       [],
     );
+    console.log('files', files);
 
     return files;
   }

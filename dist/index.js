@@ -34203,9 +34203,11 @@ class ParserService {
                 repo: this.context.repo.repo,
                 ref: sha,
             });
+            console.log('page', page.files);
             return page.files;
         }));
-        const files = paginateCommitFiles.reduce((accumulator, currentArray) => accumulator.concat(currentArray), []);
+        const files = paginateCommitFiles.reduce((accumulator, arr) => accumulator.concat(arr), []);
+        console.log('files', files);
         return files;
     }
 }
