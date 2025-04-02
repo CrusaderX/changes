@@ -102,7 +102,7 @@ export class ParserService {
             ref: sha,
           },
         );
-        console.log('page', page.files);
+        console.log('page', page);
         return page.files;
       }),
     );
