@@ -34184,8 +34184,7 @@ class ParserService {
             repo: this.context.repo.repo,
             ref: this.head,
         });
-        const files = page.reduce((accumulator, currentArray) => accumulator.concat(currentArray), []);
-        return files;
+        return page.flatMap(commit => commit.data?.files || []);
     }
     async defaultCommitDiff() {
         const response = await this.client.rest.repos.compareCommits({
@@ -34197,18 +34196,13 @@ class ParserService {
         const shas = response.data.commits.map(commit => commit.sha);
         if (!shas.length)
             return [];
-        const paginateCommitFiles = await Promise.all(shas.map(async (sha) => {
-            const page = await this.client.paginate(this.client.rest.repos.getCommit, {
-                owner: this.context.repo.owner,
-                repo: this.context.repo.repo,
-                ref: sha,
-            });
-            console.log('page', page);
-            return page.files;
-        }));
-        const files = paginateCommitFiles.reduce((accumulator, arr) => accumulator.concat(arr), []);
-        console.log('files', files);
-        return files;
+        const files = await Promise.all(shas.map(sha => this.client.paginate(this.client.rest.repos.getCommit, {
+            owner: this.context.repo.owner,
+            repo: this.context.repo.repo,
+            ref: sha,
+        }, commit => commit.data?.files)));
+        console.log('files', files.flat());
+        return files.flat();
     }
 }
 exports.ParserService = ParserService;
