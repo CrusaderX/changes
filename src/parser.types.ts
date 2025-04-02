@@ -10,7 +10,7 @@ interface IParserErrorOutput {
 
 export type IParserOutput = IParserSuccessOutput | IParserErrorOutput;
 
-export interface IFile {
+export type CommitFile = {
   additions: number;
   blob_url: string;
   changes: number;
@@ -22,4 +22,4 @@ export interface IFile {
   raw_url: string;
   sha: string;
   status: string;
-}
+};

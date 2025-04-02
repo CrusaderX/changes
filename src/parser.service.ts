@@ -1,6 +1,6 @@
 import { Context } from '@actions/github/lib/context';
 
-import { IParserOutput, IFile } from './parser.types';
+import { IParserOutput, CommitFile } from './parser.types';
 import { GitHub } from './types';
 
 export class ParserService {
@@ -44,8 +44,8 @@ export class ParserService {
     }
 
     const filenames = files
-      .filter((file: IFile) => this.diffStatuses.has(file.status)) // TODO: validate that we need to filter out by status
-      .map((file: IFile) => file.filename);
+      .filter((file: CommitFile) => this.diffStatuses.has(file.status)) // TODO: validate that we need to filter out by status
+      .map((file: CommitFile) => file.filename);
 
     return { completed: true, files: filenames };
   }
@@ -65,17 +65,17 @@ export class ParserService {
     }
   }
 
-  private async initialCommitDiff(): Promise<IFile[]> {
+  private async initialCommitDiff(): Promise<CommitFile[]> {
     const page = await this.client.paginate(this.client.rest.repos.getCommit, {
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
       ref: this.head,
     });
 
-    return page.flatMap((page: any) => page.files || []);
+    return page?.files;
   }
 
-  private async defaultCommitDiff(): Promise<IFile[]> {
+  private async defaultCommitDiff(): Promise<CommitFile[]> {
     const response = await this.client.rest.repos.compareCommits({
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
@@ -88,17 +88,17 @@ export class ParserService {
     if (!shas.length) return [];
 
     const files = await Promise.all(
-      shas.map(async (sha) => {
+      shas.map(async sha => {
         const page = await this.client.paginate(
           this.client.rest.repos.getCommit,
           {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: sha,
-          }
+          },
         );
-        return page.flatMap((page: any) => page.files || []);
-      })
+        return page?.files;
+      }),
     );
 
     return files.flat();
