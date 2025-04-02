@@ -34184,7 +34184,7 @@ class ParserService {
             repo: this.context.repo.repo,
             ref: this.head,
         });
-        return page?.files;
+        return page.flatMap((p) => p.files || []);
     }
     async defaultCommitDiff() {
         const response = await this.client.rest.repos.compareCommits({
@@ -34202,7 +34202,7 @@ class ParserService {
                 repo: this.context.repo.repo,
                 ref: sha,
             });
-            return page?.files;
+            return page.flatMap((p) => p.files || []);
         }));
         return files.flat();
     }
