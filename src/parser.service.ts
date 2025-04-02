@@ -72,7 +72,12 @@ export class ParserService {
       ref: this.head,
     });
 
-    return page.files
+    const files: CommitFile[] = page.reduce(
+      (accumulator, currentArray) => accumulator.concat(currentArray),
+      [],
+    );
+
+    return files;
   }
 
   private async defaultCommitDiff(): Promise<CommitFile[]> {
@@ -87,23 +92,25 @@ export class ParserService {
 
     if (!shas.length) return [];
 
-    let files: CommitFile[][];
-
-    await Promise.all(
-      shas.map(async (sha) => {
+    const paginateCommitFiles: CommitFile[][] = await Promise.all(
+      shas.map(async sha => {
         const page = await this.client.paginate(
           this.client.rest.repos.getCommit,
           {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: sha,
-          }
+          },
         );
-        files.push(page.files)
-      })
+        return page.files;
+      }),
     );
-    console.log('files', files.flat())
 
-    return files.flat();
+    const files: CommitFile[] = paginateCommitFiles.reduce(
+      (accumulator, currentArray) => accumulator.concat(currentArray),
+      [],
+    );
+
+    return files;
   }
 }
