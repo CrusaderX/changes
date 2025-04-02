@@ -72,10 +72,10 @@ export class ParserService {
       ref: this.head,
     });
 
-    return page.flatMap((p: any) => p.files || []);
+    return page.files
   }
 
-  private async defaultCommitDiff(): Promise<CommitFile[]> {
+  private async defaultCommitDiff(): Promise<CommitFile[][]> {
     const response = await this.client.rest.repos.compareCommits({
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
@@ -97,10 +97,11 @@ export class ParserService {
             ref: sha,
           }
         );
-        return page.flatMap((p: any) => p.files || []);
+        return page.files
       })
     );
+    console.log('files', files)
 
-    return files.flat();
+    return files
   }
 }
