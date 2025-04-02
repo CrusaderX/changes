@@ -75,7 +75,7 @@ export class ParserService {
     return page.files
   }
 
-  private async defaultCommitDiff(): Promise<CommitFile[][]> {
+  private async defaultCommitDiff(): Promise<CommitFile[]> {
     const response = await this.client.rest.repos.compareCommits({
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
@@ -87,7 +87,9 @@ export class ParserService {
 
     if (!shas.length) return [];
 
-    const files = await Promise.all(
+    let files: CommitFile[][];
+
+    await Promise.all(
       shas.map(async (sha) => {
         const page = await this.client.paginate(
           this.client.rest.repos.getCommit,
@@ -97,11 +99,11 @@ export class ParserService {
             ref: sha,
           }
         );
-        return page.files
+        files.push(page.files)
       })
     );
-    console.log('files', files)
+    console.log('files', files.flat())
 
-    return files
+    return files.flat();
   }
 }

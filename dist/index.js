@@ -34196,16 +34196,17 @@ class ParserService {
         const shas = response.data.commits.map(commit => commit.sha);
         if (!shas.length)
             return [];
-        const files = await Promise.all(shas.map(async (sha) => {
+        let files;
+        await Promise.all(shas.map(async (sha) => {
             const page = await this.client.paginate(this.client.rest.repos.getCommit, {
                 owner: this.context.repo.owner,
                 repo: this.context.repo.repo,
                 ref: sha,
             });
-            return page.files;
+            files.push(page.files);
         }));
-        console.log('files', files);
-        return files;
+        console.log('files', files.flat());
+        return files.flat();
     }
 }
 exports.ParserService = ParserService;
