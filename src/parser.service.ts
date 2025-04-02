@@ -1,6 +1,6 @@
 import { Context } from '@actions/github/lib/context';
 
-import { IParserOutput, CommitFile } from './parser.types';
+import { ParserOutput, CommitFile } from './parser.types';
 import { GitHub } from './types';
 
 export class ParserService {
@@ -22,7 +22,7 @@ export class ParserService {
     this.client = client;
   }
 
-  public async diff(): Promise<IParserOutput> {
+  public async diff(): Promise<ParserOutput> {
     if (!this.parseSHA()) {
       return {
         completed: false,
@@ -117,7 +117,7 @@ export class ParserService {
     if (!shas.length) return [];
 
     const files: CommitFile[][] = await Promise.all(
-      shas.map(sha =>
+      shas.map((sha: string) =>
         this.client.paginate(
           this.client.rest.repos.getCommit,
           {

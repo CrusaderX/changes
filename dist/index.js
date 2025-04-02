@@ -34222,7 +34222,7 @@ class ParserService {
         const shas = response.data.commits.map(commit => commit.sha);
         if (!shas.length)
             return [];
-        const files = await Promise.all(shas.map(sha => this.client.paginate(this.client.rest.repos.getCommit, {
+        const files = await Promise.all(shas.map((sha) => this.client.paginate(this.client.rest.repos.getCommit, {
             owner: this.context.repo.owner,
             repo: this.context.repo.repo,
             ref: sha,
