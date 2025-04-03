@@ -7,11 +7,11 @@ import {
 } from '@actions/core';
 import { context, getOctokit } from '@actions/github';
 
-import { IGithubInput } from './src/types';
+import { GithubInput } from './src/types';
 import { ParserService } from './src/parser.service';
 import { FilterService } from './src/filter.service';
 
-const input: IGithubInput = {
+const input: GithubInput = {
   token: getInput('token', { required: true }),
   folder: getInput('folder', { required: false }),
   exclude: getMultilineInput('exclude', { required: false }),

@@ -1,7 +1,6 @@
 import { Context } from '@actions/github/lib/context';
-import { setFailed } from '@actions/core';
 
-import { IParserOutput } from './parser.types';
+import { ParserOutput, CommitFile } from './parser.types';
 import { GitHub } from './types';
 
 export class ParserService {
@@ -23,78 +22,114 @@ export class ParserService {
     this.client = client;
   }
 
-  public diff(): Promise<IParserOutput> {
-    this.parseSHA();
+  public async diff(): Promise<ParserOutput> {
+    if (!this.parseSHA()) {
+      return {
+        completed: false,
+        error: 'Could not parse SHA',
+      };
+    }
 
-    return this.base === this.initialBase
-      ? this.initialCommitDiff()
-      : this.defaultCommitDiff();
+    const files =
+      this.base === this.initialBase
+        ? await this.initialCommitDiff()
+        : await this.defaultCommitDiff();
+
+    if (!files) {
+      return {
+        completed: false,
+        error:
+          "Couldn't get response from github or files have not been changed",
+      };
+    }
+
+    const filenames = files
+      .filter((file: CommitFile) => this.diffStatuses.has(file.status)) // TODO: validate that we need to filter out by status
+      .map((file: CommitFile) => file.filename);
+
+    return { completed: true, files: filenames };
   }
 
-  private parseSHA(): void {
+  private parseSHA(): boolean {
     switch (this.context.eventName) {
       case 'pull_request':
-        this.base = this.context.payload?.pull_request?.base.sha;
-        this.head = this.context.payload?.pull_request?.head.sha;
-        break;
+        this.base = this.context.payload.pull_request.base.sha;
+        this.head = this.context.payload.pull_request.head.sha;
+        return true;
       case 'push':
         this.base = this.context.payload.before;
         this.head = this.context.payload.after;
-        break;
+        return true;
       default:
-        setFailed(
-          'Failed to determine event type, only push and pull_request events are supported',
-        );
+        return;
     }
   }
 
-  private async initialCommitDiff(): Promise<IParserOutput> {
-    const response = await this.client.rest.repos.getCommit({
+  private async initialCommitDiff(): Promise<CommitFile[]> {
+    /**
+     * Retrieves the file diff for a single commit (initial commit).
+     *
+     * This function uses Octokit's built-in pagination to fetch all pages of file changes
+     * for the commit referenced by `this.head`. It calls the GitHub API endpoint for a commit,
+     * automatically aggregating the files array from each page. This is particularly useful
+     * when a commit has more than 300 file changes (up to a limit of 3000 files).
+     *
+     * @returns A promise that resolves to an array of CommitFile objects representing all file changes.
+     */
+    const files = await this.client.paginate(
+      this.client.rest.repos.getCommit,
+      {
+        owner: this.context.repo.owner,
+        repo: this.context.repo.repo,
+        ref: this.head,
+      },
+      // Mapping callback: for each paginated response (commit), return its 'files' array.
+      commit => commit.data?.files,
+    );
+
+    return files;
+  }
+
+  private async defaultCommitDiff(): Promise<CommitFile[]> {
+    /**
+     * Retrieves the combined file diff for a range of commits.
+     *
+     * This function first uses the `compareCommits` endpoint to get a list of commits between
+     * the base and head references. It extracts the commit SHAs from the comparison result, and
+     * for each commit, it uses Octokit's pagination to fetch all pages of file changes by calling
+     * the `getCommit` endpoint. The results from all commits are aggregated into a single flattened
+     * array of CommitFile objects.
+     *
+     * If no commits are found in the comparison, an empty array is returned.
+     *
+     * @returns A promise that resolves to an array of CommitFile objects representing the file changes
+     * across the commit range.
+     */
+    const response = await this.client.rest.repos.compareCommits({
       owner: this.context.repo.owner,
       repo: this.context.repo.repo,
-      ref: this.head,
-    });
-
-    const { data } = response;
-    const { files } = data;
-
-    if (!files) {
-      return {
-        completed: false,
-        error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
-      };
-    }
-
-    const filenames = files
-      .filter(file => this.diffStatuses.has(file.status))
-      .map(file => file.filename);
-
-    return { completed: true, files: filenames };
-  }
-
-  private async defaultCommitDiff(): Promise<IParserOutput> {
-    const response = await this.client.rest.repos.compareCommits({
       base: this.base,
       head: this.head,
-      owner: this.context.repo.owner,
-      repo: this.context.repo.repo,
-      per_page: 300,
     });
 
-    const { data } = response;
-    const { files } = data;
+    const shas = response.data.commits.map(commit => commit.sha);
 
-    if (!files) {
-      return {
-        completed: false,
-        error: `Couldn't get response from github, files: ${files} and status code: ${response.status}`,
-      };
-    }
+    if (!shas.length) return [];
 
-    const filenames = files
-      .filter(file => this.diffStatuses.has(file.status))
-      .map(file => file.filename);
+    const files: CommitFile[][] = await Promise.all(
+      shas.map((sha: string) =>
+        this.client.paginate(
+          this.client.rest.repos.getCommit,
+          {
+            owner: this.context.repo.owner,
+            repo: this.context.repo.repo,
+            ref: sha,
+          },
+          commit => commit.data?.files,
+        ),
+      ),
+    );
 
-    return { completed: true, files: filenames };
+    return files.flat();
   }
 }

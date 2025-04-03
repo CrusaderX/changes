@@ -1,11 +1,11 @@
 import { Context } from '@actions/github/lib/context';
 import { getOctokit } from '@actions/github';
 
-export interface IGithubInput {
+export type GithubInput = {
   folder?: string;
   exclude?: string[];
   include?: string[];
-  token: string;
+  token?: string;
   context: Context;
 }
 
