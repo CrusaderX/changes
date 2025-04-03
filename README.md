@@ -1,6 +1,6 @@
 ![tests](https://github.com/CrusaderX/changes/actions/workflows/ci.yaml/badge.svg?event=push)
 
-# Changes v3
+# Changes v4
 
 This action analyzes the changes in your repository to determine which directories (or services) have been modified. It is particularly useful for monorepos, where you may want to run specific workflows (e.g. tests or builds) only on the services that have been updated.
 
