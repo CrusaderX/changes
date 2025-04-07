@@ -13,7 +13,7 @@ Please refer to the [release page](https://github.com/CrusaderX/changes/releases
 
 <!-- start usage -->
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   with:
     # Personal access token (PAT) used to fetch the repository. The PAT is configured
     # with the local git config, which enables your scripts to run authenticated git
@@ -92,11 +92,10 @@ jobs:
       matrix: ${{ steps.changes.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
-      - uses: CrusaderX/changes@v3
+      - uses: CrusaderX/changes@v4
         id: changes
         with:
-          folder: 'services'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          folder: services
 
   tests:
     needs: [changes]
@@ -108,6 +107,7 @@ jobs:
     steps:
       - run: |
           echo ${{ matrix.services }} was changed!
+          # will return ["services/auth","services/pizza"]
 ```
 
 # Scenarios
@@ -144,7 +144,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 1: No root, no includes, no excludes
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
 
 # Expected Output:
@@ -156,7 +156,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 2: Root is "services", no includes, no excludes
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "services"
@@ -173,7 +173,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 3: Root is "services", include = ["/tests/"], no excludes
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "services"
@@ -186,7 +186,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 4: Root is "services", include multiple patterns, exclude with wildcard
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "services"
@@ -202,7 +202,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 5: Root in "services", include = ["/*.ts"], exclude = ["/tests/**"]
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "services"
@@ -219,7 +219,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 6: Nested services location. Root = "packages/ui-library", include = ["/*.{jsx,js}"], exclude = ["/tests/**"]
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "packages/ui-library"
@@ -233,7 +233,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 7: Complex scenario with root "services/", multiple include/exclude patterns
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "services/"
@@ -253,7 +253,7 @@ For each scenario below, a YAML document is provided that indicates:
 ## Scenario 8: Root = "tools/", no include, exclude = ["/ansible/"]
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "tools/"
@@ -268,7 +268,7 @@ For each scenario below, a YAML document is provided that indicates:
 
 
 ```yaml
-- uses: CrusaderX/changes@v3
+- uses: CrusaderX/changes@v4
   id: changes
   with:
     folder: "services"
